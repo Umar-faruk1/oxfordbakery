@@ -16,6 +16,7 @@ import { OrderDetailsDialog } from "@/components/admin/order-details-dialog"
 
 interface Order {
   id: number
+  order_number: number
   user_id: string
   status: string
   total: number
@@ -53,6 +54,7 @@ export default function AdminOrdersPage() {
         .from("orders")
         .select(`
           id,
+          order_number,
           user_id,
           status,
           total,
@@ -209,7 +211,7 @@ export default function AdminOrdersPage() {
                   transition={{ duration: 0.3, delay: index * 0.05 }}
                   className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                 >
-                  <TableCell className="font-medium">#{order.id}</TableCell>
+                  <TableCell className="font-medium">#{order.order_number}</TableCell>
                   <TableCell>
                     <div>
                       <p>{order.users.username}</p>

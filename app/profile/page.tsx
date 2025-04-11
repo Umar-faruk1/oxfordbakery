@@ -310,7 +310,7 @@ function OrderHistory() {
     try {
       const { data, error } = await supabase
         .from("orders")
-        .select("*")
+        .select("*, order_number")
         .eq("user_id", user?.id || "")
         .order("created_at", { ascending: false })
 
@@ -378,7 +378,7 @@ function OrderHistory() {
             <CardHeader className="bg-muted/50">
               <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                  <CardTitle>Order #{order.id}</CardTitle>
+                  <CardTitle>Order #{order.order_number}</CardTitle>
                   <CardDescription>{new Date(order.created_at).toLocaleString()}</CardDescription>
                 </div>
                 <div className="flex items-center gap-4">

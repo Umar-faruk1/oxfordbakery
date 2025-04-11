@@ -18,17 +18,17 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Input } from '@/components/ui/input'
 
 export default function CartPage() {
-  const { items, updateQuantity, removeItem, clearCart, total } = useCart()
+  const { items, updateQuantity, removeItem, clearCart, total, appliedPromo, applyPromoCode, removePromoCode } = useCart()
   const { user } = useAuth()
   const { supabase } = useSupabase()
   const router = useRouter()
   const [promoCode, setPromoCode] = useState('')
-  const [appliedPromo, setAppliedPromo] = useState<any>(null)
   const [isApplyingPromo, setIsApplyingPromo] = useState(false)
 
   const subtotal = items.reduce((total, item) => total + item.price * item.quantity, 0)
   const discount = appliedPromo ? (subtotal * appliedPromo.discount_percentage) / 100 : 0
-  const totalWithoutDiscount = subtotal - discount
+  const deliveryFee = 15
+  const totalWithoutDiscount = subtotal - discount + deliveryFee
 
   const handleQuantityChange = (id: number, newQuantity: number) => {
     updateQuantity(id, newQuantity)
@@ -81,9 +81,8 @@ export default function CartPage() {
         return
       }
 
-      setAppliedPromo(data)
+      applyPromoCode(data)
       setPromoCode('')
-      toast.success(`Promo code applied! ${data.discount_percentage}% off`)
     } catch (error) {
       console.error('Error applying promo code:', error)
       toast.error('Failed to apply promo code')
@@ -93,8 +92,7 @@ export default function CartPage() {
   }
 
   const handleRemovePromo = () => {
-    setAppliedPromo(null)
-    toast.success('Promo code removed')
+    removePromoCode()
   }
 
   const handleCheckout = async () => {
@@ -231,14 +229,14 @@ export default function CartPage() {
 
                         <div className="flex justify-between text-sm">
                           <span>Delivery Fee</span>
-                          <span>{formatCurrency(15)}</span>
+                          <span>{formatCurrency(deliveryFee)}</span>
                         </div>
 
                         <Separator />
 
                         <div className="flex justify-between text-lg font-bold">
                           <span>Total</span>
-                          <span>{formatCurrency(totalWithoutDiscount + 15)}</span>
+                          <span>{formatCurrency(totalWithoutDiscount)}</span>
                         </div>
                       </div>
 

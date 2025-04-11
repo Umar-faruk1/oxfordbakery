@@ -11,7 +11,7 @@ export default function AboutPage() {
         <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
           <h2 className="text-2xl font-bold mb-4">Our Story</h2>
           <p className="text-gray-600 mb-4">
-            Oxford Bakery was founded in 2010 by master pastry chef Emma Oxford with a simple mission: to create
+            Oxford Bakery was founded in 2018 by master pastry Mubarika (Shandy) Oxford with a simple mission: to create
             delicious, handcrafted cakes that bring joy to every celebration.
           </p>
           <p className="text-gray-600 mb-4">
@@ -32,7 +32,7 @@ export default function AboutPage() {
           className="relative h-[400px] rounded-lg overflow-hidden"
         >
           <img
-            src="/placeholder.svg?height=800&width=600"
+            src="/birthday.jpg"
             alt="Oxford Bakery Story"
             className="w-full h-full object-cover"
           />
@@ -84,22 +84,22 @@ export default function AboutPage() {
         <div className="grid md:grid-cols-4 gap-6">
           {[
             {
-              name: "Emma Oxford",
+              name: "Mubarika (Shandy)",
               role: "Founder & Head Baker",
               image: "/placeholder.svg?height=400&width=400",
             },
             {
-              name: "James Wilson",
+              name: "Munira Oxford",
               role: "Executive Pastry Chef",
               image: "/placeholder.svg?height=400&width=400",
             },
             {
-              name: "Sophia Chen",
+              name: "Mubarika (Shandy) Oxford",
               role: "Cake Designer",
               image: "/placeholder.svg?height=400&width=400",
             },
             {
-              name: "Michael Rodriguez",
+              name: "Safia Oxford",
               role: "Customer Experience Manager",
               image: "/placeholder.svg?height=400&width=400",
             },

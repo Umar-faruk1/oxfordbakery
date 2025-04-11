@@ -14,11 +14,15 @@ export interface CartContextType {
   updateQuantity: (id: number, quantity: number) => void
   clearCart: () => void
   total: number
+  appliedPromo: any | null
+  applyPromoCode: (promo: any) => void
+  removePromoCode: () => void
 }
 
 // Order Types
 export interface Order {
   id: number
+  order_number: number
   user_id: string
   status: string
   total: number

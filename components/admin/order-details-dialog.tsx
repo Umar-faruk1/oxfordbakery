@@ -97,7 +97,7 @@ export function OrderDetailsDialog({ open, onOpenChange, order, onUpdateStatus }
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
-          <DialogTitle>Order #{order.id}</DialogTitle>
+          <DialogTitle>Order #{order.order_number}</DialogTitle>
           <DialogDescription>Order details and management</DialogDescription>
         </DialogHeader>
 

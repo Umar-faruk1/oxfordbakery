@@ -7,6 +7,7 @@ import { CartProvider } from "@/lib/cart"
 import { SidebarProvider } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import "./globals.css"
+import Script from "next/script"
 
 export const metadata = {
   title: "Oxford Bakery | Cake Ordering",
@@ -21,6 +22,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script
+          src="https://js.paystack.co/v1/inline.js"
+          strategy="beforeInteractive"
+        />
+      </head>
       <body className={cn("min-h-screen bg-background font-sans antialiased")}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <SupabaseProvider>

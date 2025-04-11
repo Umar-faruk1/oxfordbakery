@@ -12,14 +12,29 @@ import { Input } from "@/components/ui/input"
 import { MainNav } from "@/components/main-nav"
 import { Footer } from "@/components/footer"
 
+declare global {
+  interface Window {
+    PaystackPop: {
+      setup: (options: any) => {
+        openIframe: () => void
+      }
+    }
+  }
+}
+
 export default function CheckoutPage() {
   const router = useRouter()
   const { user } = useAuth()
-  const { items, total, clearCart } = useCart()
+  const { items, total, clearCart, appliedPromo } = useCart()
   const { supabase } = useSupabase()
   const [deliveryAddress, setDeliveryAddress] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const discount = appliedPromo ? (subtotal * appliedPromo.discount_percentage) / 100 : 0
+  const deliveryFee = 15
+  const finalTotal = subtotal - discount + deliveryFee
 
   useEffect(() => {
     if (!user) {
@@ -46,43 +61,87 @@ export default function CheckoutPage() {
 
     setIsLoading(true)
     try {
-      // Create order
+      // Initialize Paystack payment
+      const paymentHandler = window.PaystackPop.setup({
+        key: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
+        email: user.email,
+        amount: finalTotal * 100, // Convert to kobo
+        currency: "GHS",
+        ref: `order_${Date.now()}`,
+        callback: function(response: any) {
+          if (response.status === "success") {
+            handlePaymentSuccess(response.reference)
+          } else {
+            toast.error("Payment failed. Please try again.")
+          }
+        },
+        onClose: function() {
+          toast.error("Payment cancelled")
+          setIsLoading(false)
+        }
+      })
+
+      paymentHandler.openIframe()
+    } catch (error) {
+      console.error("Error during checkout:", error)
+      toast.error("Failed to process order. Please try again.")
+      setIsLoading(false)
+    }
+  }
+
+  const handlePaymentSuccess = async (reference: string) => {
+    try {
+      if (!user?.id) {
+        throw new Error("User ID is required")
+      }
+
+      // Create order after successful payment
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           user_id: user.id,
-          total,
+          total: finalTotal,
           status: "pending",
           delivery_address: deliveryAddress,
           phone_number: phoneNumber,
+          payment_reference: reference,
+          promo_code_id: appliedPromo?.id,
+          discount_amount: discount
         })
         .select()
         .single()
 
       if (orderError) throw orderError
 
+      if (!order) {
+        throw new Error("Failed to create order")
+      }
+
       // Create order items
-      const orderItems = items.map((item) => ({
+      const { error: orderItemsError } = await supabase
+        .from("order_items")
+        .insert(
+          items.map((item) => ({
         order_id: order.id,
         menu_item_id: item.id,
         quantity: item.quantity,
-        price: item.price,
+        price_at_time: item.price,
       }))
+        )
 
-      const { error: itemsError } = await supabase
-        .from("order_items")
-        .insert(orderItems)
-
-      if (itemsError) throw itemsError
+      if (orderItemsError) throw orderItemsError
 
       // Clear cart
       clearCart()
 
-      // Redirect to success page
+      // Show success message
+      toast.success("Order placed successfully!")
+
+      // Redirect to order details page
       router.push(`/orders/${order.id}`)
     } catch (error) {
-      console.error("Error during checkout:", error)
-      toast.error("Failed to process order")
+      console.error("Error creating order:", error)
+      toast.error("Failed to create order. Please contact support.")
     } finally {
       setIsLoading(false)
     }
@@ -105,7 +164,7 @@ export default function CheckoutPage() {
         </section>
 
         <section className="py-12">
-          <div className="container">
+        <div className="container">
             <div className="mx-auto max-w-2xl">
               <div className="space-y-8">
                 <div>
@@ -120,13 +179,27 @@ export default function CheckoutPage() {
                       </div>
                     ))}
                     <div className="border-t pt-4">
+                      <div className="flex justify-between">
+                        <span>Subtotal</span>
+                        <span>{formatCurrency(subtotal)}</span>
+                      </div>
+                      {appliedPromo && (
+                        <div className="flex justify-between text-green-600">
+                          <span>Discount ({appliedPromo.discount_percentage}%)</span>
+                          <span>-{formatCurrency(discount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span>Delivery Fee</span>
+                        <span>{formatCurrency(deliveryFee)}</span>
+                      </div>
                       <div className="flex justify-between font-bold">
                         <span>Total</span>
-                        <span>{formatCurrency(total)}</span>
+                        <span>{formatCurrency(finalTotal)}</span>
                       </div>
                     </div>
                   </div>
-                </div>
+            </div>
 
                 <div className="space-y-4">
                   <div>
@@ -135,37 +208,37 @@ export default function CheckoutPage() {
                     </label>
                     <Input
                       id="delivery-address"
-                      value={deliveryAddress}
-                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                        value={deliveryAddress}
+                        onChange={(e) => setDeliveryAddress(e.target.value)}
                       placeholder="Enter your delivery address"
                       className="mt-1"
-                    />
-                  </div>
+                      />
+                    </div>
 
                   <div>
                     <label htmlFor="phone-number" className="block text-sm font-medium">
                       Phone Number
                     </label>
-                    <Input
+                      <Input
                       id="phone-number"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
                       placeholder="Enter your phone number"
                       className="mt-1"
-                    />
-                  </div>
-                </div>
+                      />
+                    </div>
+                    </div>
 
-                <Button
+                      <Button 
                   onClick={handleCheckout}
                   disabled={isLoading}
-                  className="w-full"
+                        className="w-full" 
                 >
                   {isLoading ? "Processing..." : "Place Order"}
-                </Button>
+                      </Button>
               </div>
             </div>
-          </div>
+        </div>
         </section>
       </main>
       <Footer />

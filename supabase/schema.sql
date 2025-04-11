@@ -27,7 +27,10 @@ ON storage.objects FOR INSERT
 WITH CHECK (
   bucket_id = 'images' 
   AND auth.role() = 'authenticated'
-  AND (storage.foldername(name))[1] = 'avatars'
+  AND (
+    (storage.foldername(name))[1] = 'avatars'
+    OR (storage.foldername(name))[1] = 'menu-items'
+  )
 );
 
 CREATE POLICY "Allow users to update their own avatars"
@@ -129,6 +132,7 @@ CREATE TABLE IF NOT EXISTS orders (
     phone_number TEXT,
     special_instructions TEXT,
     payment_reference TEXT,
+    order_number INTEGER NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -233,4 +237,54 @@ INSERT INTO promo_codes (code, discount_percentage, expiry_date) VALUES
     ('WELCOME10', 10, NOW() + INTERVAL '30 days'),
     ('SUMMER20', 20, NOW() + INTERVAL '60 days'),
     ('HOLIDAY15', 15, NOW() + INTERVAL '90 days')
-ON CONFLICT DO NOTHING; 
+ON CONFLICT DO NOTHING;
+
+-- Drop existing trigger and function if they exist
+DROP TRIGGER IF EXISTS set_order_number ON orders;
+DROP FUNCTION IF EXISTS generate_order_number();
+
+-- Create a function to generate order numbers
+CREATE OR REPLACE FUNCTION generate_order_number()
+RETURNS TRIGGER AS $$
+DECLARE
+    next_order_number INTEGER;
+BEGIN
+    -- Get the next order number for this user
+    SELECT COALESCE(MAX(order_number), 0) + 1 INTO next_order_number
+    FROM orders
+    WHERE user_id = NEW.user_id;
+    
+    -- Set the order number
+    NEW.order_number := next_order_number;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create a trigger to automatically set order_number
+CREATE TRIGGER set_order_number
+BEFORE INSERT ON orders
+FOR EACH ROW
+EXECUTE FUNCTION generate_order_number();
+
+-- Update existing orders to have order numbers
+DO $$
+DECLARE
+    user_record RECORD;
+    order_record RECORD;
+    order_count INTEGER;
+BEGIN
+    FOR user_record IN SELECT DISTINCT user_id FROM orders LOOP
+        order_count := 0;
+        FOR order_record IN 
+            SELECT id FROM orders 
+            WHERE user_id = user_record.user_id 
+            ORDER BY created_at
+        LOOP
+            order_count := order_count + 1;
+            UPDATE orders 
+            SET order_number = order_count 
+            WHERE id = order_record.id;
+        END LOOP;
+    END LOOP;
+END $$; 

@@ -46,14 +46,14 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-4 overflow-hidden">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="w-full max-w-md mx-auto"
       >
-        <div className="mb-8 flex flex-col items-center text-center">
+        <div className="mb-4 flex flex-col items-center text-center">
           <Link href="/" className="mb-2 flex items-center space-x-2">
             <Cake className="h-8 w-8" />
             <span className="text-2xl font-bold">Oxford Bakery</span>
