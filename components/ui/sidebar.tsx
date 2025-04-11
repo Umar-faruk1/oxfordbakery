@@ -75,9 +75,9 @@ export function useSidebar() {
 export function Sidebar({ children }: { children: React.ReactNode }) {
   const { open, openMobile, toggleSidebar } = useSidebar()
 
-  return (
+    return (
     <aside
-      className={cn(
+          className={cn(
         "fixed inset-y-0 left-0 z-40 flex h-full flex-col border-r bg-background transition-all duration-300 ease-in-out",
         open ? "w-64" : "w-16",
         openMobile ? "translate-x-0" : "-translate-x-full md:translate-x-0"
@@ -95,7 +95,7 @@ export function Sidebar({ children }: { children: React.ReactNode }) {
         </Button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        {children}
+            {children}
       </div>
     </aside>
   )
