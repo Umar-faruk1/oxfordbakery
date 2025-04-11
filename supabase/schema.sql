@@ -57,6 +57,37 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Enable RLS for users table
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can read their own data" ON users;
+DROP POLICY IF EXISTS "Users can update their own data" ON users;
+DROP POLICY IF EXISTS "Admins can manage all users" ON users;
+
+-- Create policies for users table
+CREATE POLICY "Users can read their own data" ON users
+    FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update their own data" ON users
+    FOR UPDATE USING (auth.uid() = id);
+
+-- Create a function to check admin role without causing recursion
+CREATE OR REPLACE FUNCTION is_admin()
+RETURNS boolean AS $$
+BEGIN
+    RETURN EXISTS (
+        SELECT 1 FROM users
+        WHERE id = auth.uid()
+        AND role = 'admin'
+    );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create admin policy using the function
+CREATE POLICY "Admins can manage all users" ON users
+    FOR ALL USING (is_admin());
+
 -- Create categories table
 CREATE TABLE IF NOT EXISTS categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -137,7 +168,6 @@ CREATE INDEX IF NOT EXISTS idx_order_items_menu_item ON order_items(menu_item_id
 CREATE INDEX IF NOT EXISTS idx_promo_codes_code ON promo_codes(code);
 
 -- Enable Row Level Security (RLS)
-ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE menu_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
@@ -145,8 +175,6 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE promo_codes ENABLE ROW LEVEL SECURITY;
 
 -- Drop existing policies
-DROP POLICY IF EXISTS "Users can read their own data" ON users;
-DROP POLICY IF EXISTS "Users can update their own data" ON users;
 DROP POLICY IF EXISTS "Users can read categories" ON categories;
 DROP POLICY IF EXISTS "Users can read menu items" ON menu_items;
 DROP POLICY IF EXISTS "Users can create their own orders" ON orders;
@@ -157,12 +185,6 @@ DROP POLICY IF EXISTS "Anyone can read active promo codes" ON promo_codes;
 DROP POLICY IF EXISTS "Only admins can manage promo codes" ON promo_codes;
 
 -- Create policies
-CREATE POLICY "Users can read their own data" ON users
-    FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "Users can update their own data" ON users
-    FOR UPDATE USING (auth.uid() = id);
-
 CREATE POLICY "Users can read categories" ON categories
     FOR SELECT USING (true);
 

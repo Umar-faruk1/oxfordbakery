@@ -75,16 +75,28 @@ export default function AdminUsersPage() {
 
   const handleUpdateRole = async (id: string, role: string) => {
     try {
-      const { error } = await supabase.from("users").update({ role }).eq("id", id)
+      const { error } = await supabase
+        .from("users")
+        .update({ role })
+        .eq("id", id)
+        .select()
 
-      if (error) throw error
+      if (error) {
+        console.error("Error updating user role:", error)
+        if (error.code === "42501") {
+          throw new Error("You don't have permission to update user roles")
+        } else if (error.code === "23505") {
+          throw new Error("This role is already assigned to the user")
+        }
+        throw error
+      }
 
       toast.success(`User role updated to ${role}`)
       fetchUsers()
       setIsDialogOpen(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating user role:", error)
-      toast.error("Failed to update user role")
+      toast.error(error.message || "Failed to update user role")
     }
   }
 

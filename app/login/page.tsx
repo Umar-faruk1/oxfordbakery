@@ -16,11 +16,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { useAuth } from "@/lib/auth"
 
 export default function LoginPage() {
-  const { signIn, resetPassword, resendConfirmationEmail } = useAuth()
+  const { signIn, resetPassword, resendConfirmationEmail, isLoading: authLoading } = useAuth()
   const searchParams = useSearchParams()
   const emailParam = searchParams.get("email")
 
-  const [isLoading, setIsLoading] = useState(false)
   const [email, setEmail] = useState(emailParam || "")
   const [password, setPassword] = useState("")
   const [isResetMode, setIsResetMode] = useState(false)
@@ -28,7 +27,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsLoading(true)
 
     try {
       if (isResetMode) {
@@ -36,8 +34,9 @@ export default function LoginPage() {
       } else {
         await signIn(email, password)
       }
-    } finally {
-      setIsLoading(false)
+    } catch (error) {
+      // Error is already handled in the auth hook
+      console.error("Login error:", error)
     }
   }
 
@@ -119,8 +118,8 @@ export default function LoginPage() {
               )}
             </CardContent>
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Loading..." : isResetMode ? "Send Reset Link" : "Sign In"}
+              <Button type="submit" className="w-full" disabled={authLoading}>
+                {authLoading ? "Loading..." : isResetMode ? "Send Reset Link" : "Sign In"}
               </Button>
 
               {isResetMode ? (

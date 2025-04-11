@@ -104,9 +104,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (error) {
         console.error("Login error:", error)
-        // Check if the error is due to email not being confirmed
-        if (error.message.includes("Email not confirmed") || error.message.includes("Invalid login credentials")) {
-          throw new Error("Email not confirmed. Please check your inbox for the confirmation email.")
+        if (error.message.includes("Email not confirmed")) {
+          throw new Error("Please confirm your email before logging in.")
+        } else if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password.")
         }
         throw error
       }
@@ -120,15 +121,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from("users")
         .select("role")
         .eq("id", data.user.id)
-        .single()
+        .maybeSingle()
 
-      if (userError) {
+      if (userError && userError.code !== "PGRST116") {
         console.error("Error fetching user role:", userError)
         throw new Error("Failed to fetch user data")
       }
 
-      // Set admin status based on role
-      setIsAdmin(userData?.role === "admin")
+      // If user doesn't exist in users table, create their profile
+      if (!userData) {
+        const { error: createError } = await supabase
+          .from("users")
+          .insert({
+            id: data.user.id,
+            email: data.user.email!,
+            username: data.user.user_metadata.username || data.user.email!.split('@')[0],
+            role: "user"
+          })
+
+        if (createError) {
+          console.error("Error creating user profile:", createError)
+          throw new Error("Failed to create user profile")
+        }
+
+        // Set admin status to false for new users
+        setIsAdmin(false)
+      } else {
+        // Set admin status based on role
+        setIsAdmin(userData.role === "admin")
+      }
       
       // Set user data
       setUser(data.user)
@@ -150,51 +171,76 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string, username: string) => {
+    setIsLoading(true)
     try {
-      // For development purposes, we'll disable email confirmation
-      // In production, you might want to enable it
-      const { error, data } = await supabase.auth.signUp({
+      // Validate input
+      if (!email || !password || !username) {
+        throw new Error("All fields are required")
+      }
+
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters long")
+      }
+
+      if (username.length < 3) {
+        throw new Error("Username must be at least 3 characters long")
+      }
+
+      // First, create the auth user
+      const { error: signUpError, data: authData } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             username,
           },
-          // Set this to false to disable email confirmation requirement
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       })
 
-      if (error) {
-        throw error
+      if (signUpError) {
+        if (signUpError.message.includes("User already registered")) {
+          throw new Error("An account with this email already exists")
+        }
+        throw signUpError
       }
 
-      if (data.user) {
-        // Create user profile in the users table
-        // For development: Check if this is the first user to make them admin
-        const { count } = await supabase.from("users").select("*", { count: "exact", head: true })
-        const role = count === 0 ? "admin" : "user" // First user becomes admin
+      if (!authData.user) {
+        throw new Error("Failed to create user account")
+      }
 
-        await supabase.from("users").insert({
-          id: data.user.id,
-          email: data.user.email!,
-          username,
-          role,
-        } as any)
+      // Create user profile using a server-side function
+      const { error: profileError } = await supabase.rpc('create_user_profile', {
+        user_id: authData.user.id,
+        user_email: authData.user.email,
+        user_username: username,
+        user_role: 'user'
+      })
+
+      if (profileError) {
+        console.error("Error creating user profile:", profileError)
+        // If profile creation fails, we should still allow the user to sign in
+        // They can update their profile later
+        toast.warning("Account created, but profile setup failed. Please try logging in.")
+      } else {
+        toast.success("Account created successfully!")
       }
 
       // Check if email confirmation is required
-      if (data.session) {
-        // User is automatically signed in (email confirmation not required)
-        toast.success("Account created successfully!")
+      if (authData.session) {
+        // User is automatically signed in
+        setUser(authData.user)
         router.push("/")
       } else {
         // Email confirmation is required
-        toast.success("Account created! Please check your email to confirm your account.")
+        toast.success("Please check your email to confirm your account.")
         router.push("/login?email=" + encodeURIComponent(email))
       }
     } catch (error: any) {
+      console.error("Sign up error:", error)
       toast.error(error.message || "Failed to create account")
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -219,31 +265,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    setIsLoading(true)
     try {
       // Clear local state first
       setUser(null)
       setIsAdmin(false)
       
-      // Check if there's an active session
-      const { data: { session } } = await supabase.auth.getSession()
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
       
-      if (!session) {
-        // No active session, just clear local state and redirect
-        localStorage.removeItem('supabase.auth.token')
-        toast.success("Signed out successfully")
-        router.push("/")
-        return
-      }
-
-      // If there is a session, attempt to sign out
-      const { error } = await supabase.auth.signOut({
-        scope: 'local'
-      })
-
       if (error) {
         throw error
       }
-
+      
       // Clear any stored data
       localStorage.removeItem('supabase.auth.token')
       
@@ -257,22 +291,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('supabase.auth.token')
       toast.error("Failed to sign out properly, but you have been logged out locally")
       router.push("/")
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const resetPassword = async (email: string) => {
+    setIsLoading(true)
     try {
+      if (!email) {
+        throw new Error("Email is required")
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       })
 
       if (error) {
+        if (error.message.includes("User not found")) {
+          throw new Error("No account found with this email address")
+        }
         throw error
       }
 
       toast.success("Password reset email sent. Please check your inbox.")
     } catch (error: any) {
+      console.error("Reset password error:", error)
       toast.error(error.message || "Failed to send reset email")
+    } finally {
+      setIsLoading(false)
     }
   }
 
