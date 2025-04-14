@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 
 export function HeroSection() {
   return (
-    <div className="relative min-h-[80vh] w-full overflow-hidden bg-[url('/hero-bg.jpg')] bg-cover bg-fixed bg-center bg-no-repeat">
+    <div className="relative min-h-[80vh] w-full overflow-hidden bg-[url('/hero-bg1.jpg')] bg-cover bg-fixed bg-center bg-no-repeat">
       {/* Dark overlay with gradient */}
       <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-black/30" />
       

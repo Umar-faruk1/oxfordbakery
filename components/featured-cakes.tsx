@@ -15,7 +15,7 @@ const featuredCakes = [
   {
     id: 1,
     name: "Chocolate Delight",
-    price: 45.99,
+    // price: 45.99,
     image: "/chocolate.jpg",
     description: "Rich chocolate cake with ganache and chocolate shavings",
     category: "birthday",
@@ -23,7 +23,7 @@ const featuredCakes = [
   {
     id: 2,
     name: "Strawberry Dream",
-    price: 39.99,
+    // price: 39.99,
     image: "/wedding-cake-5629396_1280.jpg",
     description: "Light vanilla cake with fresh strawberries and cream",
     category: "wedding",
@@ -31,7 +31,7 @@ const featuredCakes = [
   {
     id: 3,
     name: "Lemon Bliss",
-    price: 35.99,
+    // price: 35.99,
     image: "/birthday.jpg",
     description: "Tangy lemon cake with lemon curd and buttercream",
     category: "celebration",
@@ -41,16 +41,16 @@ const featuredCakes = [
 export function FeaturedCakes() {
   const { addItem } = useCart()
 
-  const handleAddToCart = (cake: (typeof featuredCakes)[0]) => {
-    addItem({
-      id: cake.id,
-      name: cake.name,
-      price: cake.price,
-      image: cake.image,
-      quantity: 1,
-    })
-    toast.success(`${cake.name} added to cart!`)
-  }
+  // const handleAddToCart = (cake: (typeof featuredCakes)[0]) => {
+  //   addItem({
+  //     id: cake.id,
+  //     name: cake.name,
+  //     price: cake.price,
+  //     image: cake.image,
+  //     quantity: 1,
+  //   })
+  //   toast.success(`${cake.name} added to cart!`)
+  // }
 
   return (
     <section className="py-12 md:py-20">
@@ -82,13 +82,13 @@ export function FeaturedCakes() {
                 </CardHeader>
                 <CardContent>
                   <p className="text-muted-foreground">{cake.description}</p>
-                  <p className="mt-2 text-lg font-bold">{formatCurrency(cake.price)}</p>
+                  {/* <p className="mt-2 text-lg font-bold">{formatCurrency(cake.price)}</p> */}
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                  <Button variant="outline" onClick={() => handleAddToCart(cake)}>
+                  {/* <Button variant="outline" onClick={() => handleAddToCart(cake)}>
                     Add to Cart
-                  </Button>
-                  <Link href={`/menu/${cake.id}`}>
+                  </Button> */}
+                  <Link href='/menu'>
                     <Button variant="ghost" size="icon">
                       <ArrowRight className="h-4 w-4" />
                     </Button>

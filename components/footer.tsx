@@ -77,11 +77,11 @@ export function Footer() {
               </Link>
             </div>
             <p className="mt-4 text-sm text-muted-foreground">
-              123 Bakery Street
+              Old Midway Bakery
               <br />
-              Cake City, CC 12345
+              Oxford Bakery
               <br />
-              (555) 123-4567
+              (+233) 208 544 128
             </p>
           </div>
         </div>

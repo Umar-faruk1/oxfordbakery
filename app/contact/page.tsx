@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
+import { MainNav } from "@/components/main-nav"
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -46,7 +47,10 @@ export default function ContactPage() {
   }
 
   return (
+    <div>
+      <MainNav/>
     <div className="container mx-auto px-4 py-12">
+      
       <h1 className="text-3xl font-bold mb-8 text-center">Contact Us</h1>
 
       <div className="grid md:grid-cols-2 gap-12">
@@ -64,7 +68,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-semibold">Our Location</h3>
-                <p className="text-gray-600">123 Bakery Street, Sweet City, SC 12345</p>
+                <p className="text-gray-600">Old Midway, Before Two Sister Fast food</p>
               </div>
             </div>
 
@@ -74,7 +78,7 @@ export default function ContactPage() {
               </div>
               <div>
                 <h3 className="font-semibold">Phone Number</h3>
-                <p className="text-gray-600">(123) 456-7890</p>
+                <p className="text-gray-600">(+233) 208 544 128</p>
               </div>
             </div>
 
@@ -109,7 +113,7 @@ export default function ContactPage() {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="bg-white rounded-lg shadow-md p-6"
+          className="rounded-lg shadow-md p-6"
         >
           <h2 className="text-2xl font-bold mb-6">Send a Message</h2>
 
@@ -171,6 +175,7 @@ export default function ContactPage() {
           </form>
         </motion.div>
       </div>
+    </div>
     </div>
   )
 } 

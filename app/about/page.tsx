@@ -1,9 +1,12 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { MainNav } from "@/components/main-nav"
 
 export default function AboutPage() {
   return (
+    <div>
+      <MainNav/>
     <div className="container mx-auto px-4 py-12">
       <h1 className="text-3xl font-bold mb-8 text-center">About Oxford Bakery</h1>
 
@@ -86,22 +89,22 @@ export default function AboutPage() {
             {
               name: "Mubarika (Shandy)",
               role: "Founder & Head Baker",
-              image: "/placeholder.svg?height=400&width=400",
+              image: "/barika.jpg",
             },
             {
               name: "Munira Oxford",
               role: "Executive Pastry Chef",
-              image: "/placeholder.svg?height=400&width=400",
+              image: "/barika.jpg",
             },
             {
               name: "Mubarika (Shandy) Oxford",
               role: "Cake Designer",
-              image: "/placeholder.svg?height=400&width=400",
+              image: "/barika.jpg",
             },
             {
               name: "Safia Oxford",
               role: "Customer Experience Manager",
-              image: "/placeholder.svg?height=400&width=400",
+              image: "/barika.jpg",
             },
           ].map((member, index) => (
             <motion.div
@@ -126,6 +129,7 @@ export default function AboutPage() {
           ))}
         </div>
       </motion.div>
+    </div>
     </div>
   )
 } 
